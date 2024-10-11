@@ -1,0 +1,41 @@
+#ELiminacaion de particiones
+
+mkdisk -size=500 -unit=K -fit=BF -path="/home/bang/Disks/disk1.bin"
+fdisk -size=100 -unit=K -path="/home/bang/Disks/disk1.bin" -type=p -name="particion1"
+fdisk -size=100 -unit=K -path="/home/bang/Disks/disk1.bin" -type=e -name="particion2"
+mount -path="/home/bang/Disks/disk1.bin" -name="particion1"
+mkfs -id=341a -type=2fs
+fdisk -delete=fast -name="particion1" -path="/home/bang/Disks/disk1.bin"
+
+
+
+#Eliminacion de particiones 2
+mkdisk -size=500 -unit=K -fit=BF -path="/home/bang/Disks/disk1.bin"
+fdisk -size=100 -unit=K -path="/home/bang/Disks/disk1.bin" -type=p -name="Particion1"
+fdisk -size=100 -unit=K -path="/home/bang/Disks/disk1.bin" -type=e -name="Particion2"
+fdisk -size=50 -unit=K -path="/home/bang/Disks/disk1.bin" -type=l -name="Particion3"
+fdisk -size=20 -unit=K -path="/home/bang/Disks/disk1.bin" -type=l -name="Particion4"
+fdisk -delete=fast -name="Particion4" -path="/home/bang/Disks/disk1.bin"
+
+
+#Modficacion de particiones (Primarias)
+mkdisk -size=500 -unit=K -fit=BF -path="/home/bang/Disks/disk1.bin"
+fdisk -size=100 -unit=K -path="/home/bang/Disks/disk1.bin" -type=p -name="Particion1"
+fdisk -add=800 -size=10 -unit=K -path="/home/bang/Disks/disk1.bin" -name="Particion1" #error
+fdisk -add=-20 -size=10 -unit=K -path="/home/bang/Disks/disk1.bin" -name="Particion1"
+
+
+#Desmontar particiones
+mkdisk -size=500 -unit=K -fit=BF -path="/home/bang/Disks/disk2.bin"
+fdisk -size=100 -unit=K -path="/home/bang/Disks/disk1.bin" -type=p -name="Particion1"
+fdisk -size=100 -unit=K -path="/home/bang/Disks/disk1.bin" -type=p -name="Particion2"
+mount -path="/home/bang/Disks/disk1.bin" -name="particion1"
+mount -path="/home/bang/Disks/disk1.bin" -name="particion2"
+unmount -id=341a
+
+
+#3FS
+mkdisk -size=500 -unit=K -fit=BF -path="/home/bang/Disks/disk1.bin"
+fdisk -size=100 -unit=K -path="/home/bang/Disks/disk1.bin" -type=p -name="Particion1"
+mount -path="/home/bang/Disks/disk1.bin" -name="particion1"
+mkfs -id=341a -type=3fs

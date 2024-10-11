@@ -1,0 +1,43 @@
+# Ignore .env files
+.env
+.env.*
+
+# Binaries for programs and plugins
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Dependency directories
+vendor/
+
+# Go specific
+*.log
+*.lock
+*.tmp
+*.swp
+*.vscode
+
+# Go build output
+bin/
+*.exe
+*.dll
+*.so
+*.dylib
+*.out
+
+# Generated files
+dist/
+
+# Ignore the go module files if necessary
+/go.sum
+/go.mod
+
+# JetBrains IDEs and GoLand files
+.idea/
+
+# Other system-specific files
+.DS_Store
+Thumbs.db
