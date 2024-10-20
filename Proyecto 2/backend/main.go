@@ -74,6 +74,7 @@ func main() {
 	mux.HandleFunc("/api/mkfs", MkfsHandler)
 	mux.HandleFunc("/api/login", LoginHandler)
 	mux.HandleFunc("/api/rep", RepHandler)
+	mux.HandleFunc("/api/readmbr", ReadMBRHandler)
 
 	// Iniciar el servidor con el middleware de CORS habilitado
 	fmt.Printf("Servidor ejecutándose en el puerto %s\n", port)

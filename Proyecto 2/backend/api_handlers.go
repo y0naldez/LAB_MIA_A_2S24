@@ -13,6 +13,43 @@ import (
 	"strings"
 )
 
+// Estructura para los parámetros del ReadMBR
+type ReadMBRParams struct {
+	Path string `json:"path"`
+}
+
+// Handler para leer el MBR y devolver las particiones
+func ReadMBRHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		var params ReadMBRParams
+
+		// Decodificar el cuerpo JSON de la solicitud
+		err := json.NewDecoder(r.Body).Decode(&params)
+		if err != nil {
+			http.Error(w, "Error al procesar la solicitud", http.StatusBadRequest)
+			return
+		}
+
+		// Validaciones
+		if params.Path == "" {
+			http.Error(w, "La ruta es requerida", http.StatusBadRequest)
+			return
+		}
+
+		// Leer el MBR y obtener las particiones
+		partitions, err := DiskManagement.ListPartitions(params.Path)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Error al leer las particiones: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		// Responder con las particiones en formato JSON
+		json.NewEncoder(w).Encode(partitions)
+	} else {
+		http.Error(w, "Método no permitido", http.StatusMethodNotAllowed)
+	}
+}
+
 // Estructura para los parámetros de mkdisk
 type MkDiskParams struct {
 	Size int    `json:"size"`
@@ -315,32 +352,46 @@ type LoginParams struct {
 
 // Handler para el comando login
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+
 	if r.Method == http.MethodPost {
 		var params LoginParams
 
 		// Decodificar el cuerpo JSON de la solicitud
 		err := json.NewDecoder(r.Body).Decode(&params)
 		if err != nil {
-			http.Error(w, "Error al procesar la solicitud", http.StatusBadRequest)
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Error al procesar la solicitud"})
 			return
 		}
 
 		// Validaciones
 		if params.User == "" || params.Pass == "" || params.ID == "" {
-			http.Error(w, "Los campos usuario, contraseña y id son obligatorios", http.StatusBadRequest)
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Los campos usuario, contraseña y id son obligatorios"})
 			return
 		}
 
 		// Llamar a la función que ejecuta el login
-		User.Login(params.User, params.Pass, params.ID)
+		loginMessage, loginError := User.Login(params.User, params.Pass, params.ID)
 
-		// Responder con éxito
-		response := map[string]string{
-			"message": "Inicio de sesión exitoso",
+		// Verificar si el login fue exitoso o no y responder en consecuencia
+		if loginError == nil {
+			response := map[string]string{
+				"message": loginMessage,
+			}
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(response)
+		} else {
+			// Enviar mensaje de error como JSON con código 401
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(map[string]string{"error": loginError.Error()})
 		}
-		json.NewEncoder(w).Encode(response)
 	} else {
-		http.Error(w, "Método no permitido", http.StatusMethodNotAllowed)
+		// Método no permitido
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Método no permitido"})
 	}
 }
 

@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-func Login(user string, pass string, id string) {
+func Login(user string, pass string, id string) (string, error) {
 	fmt.Println("======Start LOGIN======")
 	fmt.Println("User:", user)
 	fmt.Println("Pass:", pass)
@@ -26,7 +26,7 @@ func Login(user string, pass string, id string) {
 		for _, partition := range partitions {
 			if partition.ID == id && partition.LoggedIn { // Verifica si ya está logueado
 				fmt.Println("Ya existe un usuario logueado!")
-				return
+				return "", fmt.Errorf("Ya existe un usuario logueado en esta partición")
 			}
 			if partition.ID == id { // Encuentra la partición correcta
 				filepath = partition.Path
@@ -41,14 +41,14 @@ func Login(user string, pass string, id string) {
 
 	if !partitionFound {
 		fmt.Println("Error: No se encontró ninguna partición montada con el ID proporcionado")
-		return
+		return "", fmt.Errorf("No se encontró ninguna partición montada con el ID proporcionado")
 	}
 
 	// Abrir archivo binario
 	file, err := Utilities.OpenFile(filepath)
 	if err != nil {
 		fmt.Println("Error: No se pudo abrir el archivo:", err)
-		return
+		return "", fmt.Errorf("Error al abrir el archivo")
 	}
 	defer file.Close()
 
@@ -56,7 +56,7 @@ func Login(user string, pass string, id string) {
 	// Leer el MBR desde el archivo binario
 	if err := Utilities.ReadObject(file, &TempMBR, 0); err != nil {
 		fmt.Println("Error: No se pudo leer el MBR:", err)
-		return
+		return "", fmt.Errorf("Error al leer el MBR")
 	}
 
 	// Imprimir el MBR
@@ -74,25 +74,23 @@ func Login(user string, pass string, id string) {
 					index = i
 				} else {
 					fmt.Println("Partition is not mounted")
-					return
+					return "", fmt.Errorf("La partición no está montada")
 				}
 				break
 			}
 		}
 	}
 
-	if index != -1 {
-		Structs.PrintPartition(TempMBR.Partitions[index])
-	} else {
+	if index == -1 {
 		fmt.Println("Partition not found")
-		return
+		return "", fmt.Errorf("No se encontró la partición con el ID proporcionado")
 	}
 
 	var tempSuperblock Structs.Superblock
 	// Leer el Superblock desde el archivo binario
 	if err := Utilities.ReadObject(file, &tempSuperblock, int64(TempMBR.Partitions[index].Start)); err != nil {
 		fmt.Println("Error: No se pudo leer el Superblock:", err)
-		return
+		return "", fmt.Errorf("Error al leer el Superblock")
 	}
 
 	// Buscar el archivo de usuarios /users.txt -> retorna índice del Inodo
@@ -102,7 +100,7 @@ func Login(user string, pass string, id string) {
 	// Leer el Inodo desde el archivo binario
 	if err := Utilities.ReadObject(file, &crrInode, int64(tempSuperblock.S_inode_start+indexInode*int32(binary.Size(Structs.Inode{})))); err != nil {
 		fmt.Println("Error: No se pudo leer el Inodo:", err)
-		return
+		return "", fmt.Errorf("Error al leer el Inodo")
 	}
 
 	// Leer datos del archivo
@@ -128,11 +126,13 @@ func Login(user string, pass string, id string) {
 
 	// Si las credenciales son correctas y marcamos como logueado
 	if login {
-		fmt.Println("Usuario logueado con exito")
+		fmt.Println("Usuario logueado con éxito")
 		DiskManagement.MarkPartitionAsLoggedIn(id) // Marcar la partición como logueada
+		return "Inicio de sesión exitoso", nil
 	}
 
-	fmt.Println("======End LOGIN======")
+	fmt.Println("Credenciales incorrectas")
+	return "", fmt.Errorf("Credenciales incorrectas")
 }
 
 func InitSearch(path string, file *os.File, tempSuperblock Structs.Superblock) int32 {

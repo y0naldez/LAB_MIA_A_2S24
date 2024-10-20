@@ -15,6 +15,14 @@ const Navbar = () => {
                 Ejecución
               </Link>
             </li>
+            <li className="nav-item">
+              <Link className="nav-link" to="/login">
+                Iniciar sesión
+              </Link>
+            </li>
+            <li className="nav-item">
+              <Link className="nav-link" to="/visualizador">Visualizador</Link> {/* Link al visualizador */}
+            </li>
           </ul>
         </div>
       </div>

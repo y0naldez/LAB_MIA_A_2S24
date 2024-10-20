@@ -1,7 +1,3 @@
-# Ignore .env files
-.env
-.env.*
-
 # Binaries for programs and plugins
 *.exe
 *.dll

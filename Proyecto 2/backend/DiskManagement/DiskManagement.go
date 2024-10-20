@@ -11,6 +11,77 @@ import (
 	"time"
 )
 
+// Función para leer el MBR desde un archivo binario
+func ReadMBR(path string) {
+	// Abrir el archivo binario
+	file, err := Utilities.OpenFile(path)
+	if err != nil {
+		fmt.Println("Error al abrir el archivo:", err)
+		return
+	}
+	defer file.Close()
+
+	// Crear una variable para almacenar el MBR
+	var mbr Structs.MRB
+
+	// Leer el MBR desde el archivo
+	err = Utilities.ReadObject(file, &mbr, 0) // Leer desde la posición 0
+	if err != nil {
+		fmt.Println("Error al leer el MBR:", err)
+		return
+	}
+
+	// Imprimir el MBR
+	Structs.PrintMBR(mbr)
+}
+
+// Estructura para representar una partición en JSON
+type PartitionInfo struct {
+	Name   string `json:"name"`
+	Type   string `json:"type"`
+	Start  int32  `json:"start"`
+	Size   int32  `json:"size"`
+	Status string `json:"status"`
+}
+
+// Función para leer el MBR desde un archivo binario y devolver las particiones
+func ListPartitions(path string) ([]PartitionInfo, error) {
+	// Abrir el archivo binario
+	file, err := Utilities.OpenFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("Error al abrir el archivo: %v", err)
+	}
+	defer file.Close()
+
+	// Crear una variable para almacenar el MBR
+	var mbr Structs.MRB
+
+	// Leer el MBR desde el archivo
+	err = Utilities.ReadObject(file, &mbr, 0) // Leer desde la posición 0
+	if err != nil {
+		return nil, fmt.Errorf("Error al leer el MBR: %v", err)
+	}
+
+	// Crear una lista de particiones basada en el MBR
+	var partitions []PartitionInfo
+	for _, partition := range mbr.Partitions {
+		if partition.Size > 0 { // Solo agregar si la partición tiene un tamaño
+			// Limpiar el nombre para eliminar caracteres nulos
+			partitionName := strings.TrimRight(string(partition.Name[:]), "\x00")
+
+			partitions = append(partitions, PartitionInfo{
+				Name:   partitionName,
+				Type:   strings.TrimRight(string(partition.Type[:]), "\x00"),
+				Start:  partition.Start,
+				Size:   partition.Size,
+				Status: strings.TrimRight(string(partition.Status[:]), "\x00"),
+			})
+		}
+	}
+
+	return partitions, nil
+}
+
 // Estructura para representar una partición montada
 type MountedPartition struct {
 	Path     string

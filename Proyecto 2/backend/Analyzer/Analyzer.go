@@ -68,6 +68,8 @@ func AnalyzeCommand(command string, params string) {
 		fn_rep(params)
 	} else if strings.Contains(command, "mkusr") {
 		fn_mkusr(params)
+	} else if strings.Contains(command, "readmbr") {
+		fn_readmbr(params)
 	} else {
 		fmt.Println("Error: Comando inválido o no encontrado")
 	}
@@ -192,6 +194,35 @@ func fn_fdisk(input string) {
 
 	// Llamar a la función que ejecuta el fdisk
 	DiskManagement.Fdisk(*size, *path, *name, *unit, *type_, *fit)
+}
+
+// Función para leer el MBR y listar particiones
+func fn_readmbr(params string) {
+	fs := flag.NewFlagSet("readmbr", flag.ExitOnError)
+	path := fs.String("path", "", "Ruta del disco")
+
+	matches := re.FindAllStringSubmatch(params, -1)
+
+	for _, match := range matches {
+		flagName := match[1]
+		flagValue := strings.ToLower(match[2])
+		flagValue = strings.Trim(flagValue, "\"")
+
+		switch flagName {
+		case "path":
+			fs.Set(flagName, flagValue)
+		default:
+			fmt.Println("Error: Flag no encontrada")
+		}
+	}
+
+	if *path == "" {
+		fmt.Println("Error: La ruta es requerida")
+		return
+	}
+
+	// Llamar a la función para leer el MBR y mostrar las particiones
+	DiskManagement.ReadMBR(*path)
 }
 
 // Función para montar particiones (fn_mount)
